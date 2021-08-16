@@ -7,7 +7,7 @@ namespace tododposada2.Functions.Entities
 {
     public class TodoEntity : TableEntity
     {
-        public DateTime CreatedTime { get; set; };
+        public DateTime CreatedTime { get; set; }
 
         public string TaskDescription { get; set; }
 
