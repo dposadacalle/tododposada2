@@ -16,6 +16,13 @@ namespace tododposada2.Functions.Functions
 {
     public static class TodoApi
     {
+        /*
+             Daniel Posada
+             Date: 16/08/2021
+             Methodo: POST
+             Description: 
+                - Create a Todo
+         */
         [FunctionName(nameof(CreateTodo))]
         public static async Task<IActionResult> CreateTodo(
 
@@ -68,15 +75,18 @@ namespace tododposada2.Functions.Functions
 
         }
 
+        /*
+             Daniel Posada
+             Date: 16/08/2021
+             Methodo: PUT
+             Description: 
+                - Update the Todo for the Id
+         */
         [FunctionName(nameof(UpdateTodo))]
         public static async Task<IActionResult> UpdateTodo(
-
-            // Inject through HttpRequest
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "todo/{id}")] HttpRequest req,
-            // Inject through CloudTable 
             [Table("todo", Connection = "AzureWebJobsStorage")] CloudTable todoTable,
             string id,
-            // Inject through ILogger
             ILogger log)
         {
             log.LogInformation($"Update for todo {id}, received.");
@@ -105,11 +115,125 @@ namespace tododposada2.Functions.Functions
             {
                 todoEntity.TaskDescription = todo.TaskDescription;
             }
-            
+
             TableOperation addOperation = TableOperation.Replace(todoEntity);
             await todoTable.ExecuteAsync(addOperation);
 
             string message = $"Todo: {id} updated in table.";
+            log.LogInformation(message);
+
+            return new OkObjectResult(new Response
+            {
+                IsSucess = true,
+                Message = message,
+                Result = todoEntity
+            });
+
+        }
+
+        /*
+             Daniel Posada
+             Date: 16/08/2021
+             Methodo: GET
+             Description: 
+                - Get all the todo
+         */
+        [FunctionName(nameof(GetAllTodos))]
+        public static async Task<IActionResult> GetAllTodos(
+
+             // Inject through HttpRequest
+             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "todo")] HttpRequest req,
+             // Inject through CloudTable 
+             [Table("todo", Connection = "AzureWebJobsStorage")] CloudTable todoTable,
+             // Inject through ILogger
+             ILogger log)
+        {
+            log.LogInformation("Get all todos received.");
+
+            TableQuery<TodoEntity> query = new TableQuery<TodoEntity>();
+            TableQuerySegment<TodoEntity> todos = await todoTable.ExecuteQuerySegmentedAsync(query, null);
+
+            string message = "Retrieve all todos.";
+            log.LogInformation(message);
+
+            return new OkObjectResult(new Response
+            {
+                IsSucess = true,
+                Message = message,
+                Result = todos
+            });
+
+        }
+
+        /*
+             Daniel Posada
+             Date: 16/08/2021
+             Methodo: GET
+             Description: 
+                - Get todo by id
+         */
+        [FunctionName(nameof(GetTodoById))]
+        public static IActionResult GetTodoById(
+
+             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "todo/{id}")] HttpRequest req,
+             [Table("todo", "TODO", "{id}", Connection = "AzureWebJobsStorage")] TodoEntity todoEntity,
+             string id,
+             ILogger log)
+        {
+            log.LogInformation($"Get todo by id: {id} received.");
+
+
+            if (todoEntity == null)
+            {
+                return new BadRequestObjectResult(new Response
+                {
+                    IsSucess = false,
+                    Message = "Todo not found."
+                });
+            }
+
+            string message = $"Todo {todoEntity.RowKey}, received.";
+            log.LogInformation(message);
+
+            return new OkObjectResult(new Response
+            {
+                IsSucess = true,
+                Message = message,
+                Result = todoEntity
+            });
+
+        }
+
+        /*
+             Daniel Posada
+             Date: 16/08/2021
+             Methodo: DELETE
+             Description: 
+                - Delete todo by id
+         */
+        [FunctionName(nameof(DeleteTodoById))]
+        public static async Task<IActionResult> DeleteTodoById(
+
+             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "todo/{id}")] HttpRequest req,
+             [Table("todo", "TODO", "{id}", Connection = "AzureWebJobsStorage")] TodoEntity todoEntity,
+             [Table("todo", Connection = "AzureWebJobsStorage")] CloudTable todoTable,
+             string id,
+             ILogger log)
+        {
+            log.LogInformation($"Delete todo: {id} received.");
+
+            if (todoEntity == null)
+            {
+                return new BadRequestObjectResult(new Response
+                {
+                    IsSucess = false,
+                    Message = "Todo not found."
+                });
+            }
+
+            await todoTable.ExecuteAsync(TableOperation.Delete(todoEntity));
+
+            string message = $"Todo {todoEntity.RowKey}, deleted.";
             log.LogInformation(message);
 
             return new OkObjectResult(new Response
