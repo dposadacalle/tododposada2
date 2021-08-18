@@ -22,9 +22,10 @@ namespace tododposada2.Functions.Functions
             int deleted = 0;
             foreach (TodoEntity completedTodo in completedTodos)
             {
-                await todoTable.ExecuteAsync(TableOperation.Delete(completedTodo));
+                await todoTable.ExecuteAsync(TableOperatio<n.Delete(completedTodo));
                 deleted++; // Increment the variable when delete two every the todo
             }
+
 
             log.LogInformation($"Deleted: {deleted} items at: {DateTime.Now}");
         }
